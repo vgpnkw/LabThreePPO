@@ -12,7 +12,6 @@ import android.widget.TextView;
 
 
 public class Game extends Fragment {
-    ImageView iv_dice_p1, iv_dice_p2, iv_lives_p1, iv_lives_p2 ;
-    TextView tv_player1, tv_player2;
+
 
 }

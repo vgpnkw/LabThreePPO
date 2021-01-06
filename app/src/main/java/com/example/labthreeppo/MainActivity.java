@@ -2,8 +2,12 @@ package com.example.labthreeppo;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -15,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
     Random r;
     int livesP1, livesP2;
     int rolledP1, rolledP2;
+    Animation animation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         r = new Random();
+        animation = AnimationUtils.loadAnimation(this, R.anim.rotate);
 
         iv_dice_p1 = findViewById(R.id.iv_dice_p1);
         iv_dice_p2 = findViewById(R.id.iv_dice_p2);
@@ -44,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         iv_dice_p1.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                rolledP1 = r.nextInt(7) + 1;
+                rolledP1 = r.nextInt(6) + 1;
                 setDiceImage(rolledP1, iv_dice_p1);
 
                 if(rolledP2 != 0) {
@@ -54,10 +60,12 @@ public class MainActivity extends AppCompatActivity {
                     if(rolledP1 > rolledP2) {
                         livesP2--;
                         setDiceImage(livesP2, iv_lives_p2);
-                    } else {
+                    }
+                    if(rolledP2 > rolledP1){
                         livesP1--;
                         setDiceImage(livesP1, iv_lives_p1);
                     }
+                    checkEndGame();
                     rolledP2 = 0;
                     rolledP1 = 0;
 
@@ -74,18 +82,20 @@ public class MainActivity extends AppCompatActivity {
         iv_dice_p2.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                rolledP2 = r.nextInt(7) + 1;
-                setDiceImage(rolledP1, iv_dice_p1);
+                rolledP2 = r.nextInt(6) + 1;
+                setDiceImage(rolledP2, iv_dice_p2);
                 if(rolledP1 != 0) {
                     tv_player1.setText("PLAYER 1 ROLL");
                     tv_player1.setText("PLAYER 2 ROLL");
                     if(rolledP1 > rolledP2) {
                         livesP2--;
                         setDiceImage(livesP2, iv_lives_p2);
-                    } else {
+                    }
+                    if(rolledP2 > rolledP1){
                         livesP1--;
                         setDiceImage(livesP1, iv_lives_p1);
                     }
+                    checkEndGame();
                     rolledP1 = 0;
                     rolledP2 = 0;
 
@@ -93,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                     iv_dice_p2.setEnabled(true);
 
                 } else {
-                    tv_player1.setText("PLAYER 2 ROLLED!");
+                    tv_player2.setText("PLAYER 2 ROLLED!");
                     iv_dice_p2.setEnabled(false);
                 }
             }
@@ -104,25 +114,54 @@ public class MainActivity extends AppCompatActivity {
         switch (dice) {
             case 1:
                 image.setImageResource(R.drawable.dice1);
+                image.startAnimation(animation);
                 break;
             case 2:
                 image.setImageResource(R.drawable.dice2);
+                image.startAnimation(animation);
                 break;
             case 3:
                 image.setImageResource(R.drawable.dice3);
+                image.startAnimation(animation);
                 break;
             case 4:
                 image.setImageResource(R.drawable.dice4);
+                image.startAnimation(animation);
                 break;
             case 5:
                 image.setImageResource(R.drawable.dice5);
+                image.startAnimation(animation);
                 break;
             case 6:
                 image.setImageResource(R.drawable.dice6);
+                image.startAnimation(animation);
                 break;
             default:
                 image.setImageResource(R.drawable.krest);
+                image.startAnimation(animation);
 
+        }
+    }
+    private void  checkEndGame() {
+        if (livesP1 == 0 || livesP2 == 0) {
+            String text = "";
+            if(livesP1 != 0) {
+                text = "Winner Player 1!";
+            }
+            if(livesP2 != 0) {
+                text = "Winner Player 2!";
+            }
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setCancelable(false);
+            alertDialogBuilder.setMessage(text);
+            alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    finish();
+                }
+            });
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
         }
     }
 }
