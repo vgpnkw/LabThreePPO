@@ -1,186 +1,93 @@
 package com.example.labthreeppo;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
-    ImageView iv_dice_p1, iv_dice_p2, iv_lives_p1, iv_lives_p2 ;
-    TextView tv_player1, tv_player2;
-    Random r;
-    int livesP1, livesP2;
-    int rolledP1, rolledP2;
-    Animation animation;
+    EditText editText;
+    Button button;
+
+    String playerName = "";
+
+    FirebaseDatabase database;
+    DatabaseReference playerRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        r = new Random();
-        animation = AnimationUtils.loadAnimation(this, R.anim.rotate);
+        editText = findViewById(R.id.editTextTextPersonName);
+        button = findViewById(R.id.button);
 
-        iv_dice_p1 = findViewById(R.id.iv_dice_p1);
-        iv_dice_p2 = findViewById(R.id.iv_dice_p2);
-
-        iv_lives_p1 = findViewById(R.id.iv_lives_p1);
-        iv_lives_p2 = findViewById(R.id.iv_lives_p2);
-
-        tv_player1 = findViewById(R.id.tv_player1);
-        tv_player2 = findViewById(R.id.tv_player2);
-
-        tv_player1.setText("PLAYER 1 ROLL");
-        tv_player2.setText("PLAYER 2 ROLL");
-
-        livesP1 = 6;
-        livesP2 = 6;
-        setDiceImage(livesP1, iv_lives_p1);
-        setDiceImage(livesP2, iv_lives_p2);
-
-
-        iv_dice_p1.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                rolledP1 = r.nextInt(6) + 1;
-                setDiceImage(rolledP1, iv_dice_p1);
-                iv_dice_p1.startAnimation(animation);
-
-                if(rolledP2 != 0) {
-                    tv_player1.setText("PLAYER 1 ROLL");
-                    tv_player2.setText("PLAYER 2 ROLL");
-
-                    if(rolledP1 > rolledP2) {
-                        livesP2--;
-                        setDiceImage(livesP2, iv_lives_p2);
-
-                        Toast.makeText(MainActivity.this, "Player 1 WIN", Toast.LENGTH_SHORT).show();
-                    }
-                    if(rolledP2 > rolledP1){
-                        livesP1--;
-                        setDiceImage(livesP1, iv_lives_p1);
-                        Toast.makeText(MainActivity.this, "Player 2 WIN", Toast.LENGTH_SHORT).show();
-                    }
-                    if(rolledP1 == rolledP2) {
-                        Toast.makeText(MainActivity.this, "Draw ", Toast.LENGTH_SHORT).show();
-                    }
-
-                    rolledP2 = 0;
-                    rolledP1 = 0;
-
-                    iv_dice_p1.setEnabled(true);
-                    iv_dice_p2.setEnabled(true);
-                    checkEndGame();
-
-                } else {
-                    tv_player1.setText("PLAYER 1 ROLLED!");
-                    iv_dice_p1.setEnabled(false);
-                }
-            }
-        });
-
-        iv_dice_p2.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                rolledP2 = r.nextInt(6) + 1;
-                setDiceImage(rolledP2, iv_dice_p2);
-                iv_dice_p2.startAnimation(animation);
-                if(rolledP1 != 0) {
-                    tv_player1.setText("PLAYER 1 ROLL");
-                    tv_player1.setText("PLAYER 2 ROLL");
-                    if(rolledP1 > rolledP2) {
-                        livesP2--;
-                        setDiceImage(livesP2, iv_lives_p2);
-                        Toast.makeText(MainActivity.this, "Player 1 WIN", Toast.LENGTH_SHORT).show();
-                    }
-                    if(rolledP2 > rolledP1){
-                        livesP1--;
-                        setDiceImage(livesP1, iv_lives_p1);
-                        Toast.makeText(MainActivity.this, "Player 2 WIN", Toast.LENGTH_SHORT).show();
-                    }
-
-                    if(rolledP1 == rolledP2) {
-                        Toast.makeText(MainActivity.this, "Draw ", Toast.LENGTH_SHORT).show();
-                    }
-
-                    rolledP1 = 0;
-                    rolledP2 = 0;
-
-                    iv_dice_p1.setEnabled(true);
-                    iv_dice_p2.setEnabled(true);
-                    checkEndGame();
-
-                } else {
-                    tv_player2.setText("PLAYER 2 ROLLED!");
-                    iv_dice_p2.setEnabled(false);
-                }
-            }
-        });
-
-    }
-    private  void setDiceImage(int dice, ImageView image) {
-        switch (dice) {
-            case 1:
-                image.setImageResource(R.drawable.dice1);
-
-                break;
-            case 2:
-                image.setImageResource(R.drawable.dice2);
-
-                break;
-            case 3:
-                image.setImageResource(R.drawable.dice3);
-
-                break;
-            case 4:
-                image.setImageResource(R.drawable.dice4);
-
-                break;
-            case 5:
-                image.setImageResource(R.drawable.dice5);
-
-                break;
-            case 6:
-                image.setImageResource(R.drawable.dice6);
-
-                break;
-            default:
-                image.setImageResource(R.drawable.krest);
-
+        database = FirebaseDatabase.getInstance();
+        //if exists
+        SharedPreferences preferences = getSharedPreferences("PREFS", 0);
+        playerName = preferences.getString("playerName", "");
+        if(!playerName.equals("")) {
+            playerRef = database.getReference("players/" + playerName);
+            addEventListener();
+            playerRef.setValue("");
         }
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playerName = editText.getText().toString();
+                editText.setText("");
+                if(!playerName.equals("")) {
+                    button.setText("LOGGING");
+                    button.setEnabled(false);
+                    playerRef = database.getReference("players/" + playerName);
+                    addEventListener();
+                    playerRef.setValue("");
+                }
+            }
+        });
     }
-    private void  checkEndGame() {
-        if (livesP1 == 0 || livesP2 == 0) {
-            iv_dice_p1.setEnabled(false);
-            iv_dice_p2.setEnabled(false);
+    private void addEventListener() {
+        //read from databae
+        playerRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(!playerName.equals("")) {
+                    SharedPreferences preferences = getSharedPreferences("PREFS", 0);
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putString("playerName", playerName);
+                    editor.apply();
 
-            String text = "";
-            if(livesP1 != 0) {
-                text = "Winner Player 1!";
-            }
-            if(livesP2 != 0) {
-                text = "Winner Player 2!";
-            }
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-            alertDialogBuilder.setCancelable(false);
-            alertDialogBuilder.setMessage(text);
-            alertDialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
+                    startActivity(new Intent(getApplicationContext(), Menu.class));
                     finish();
                 }
-            });
-            AlertDialog alertDialog = alertDialogBuilder.create();
-            alertDialog.show();
-        }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                button.setText("LOG IN");
+                button.setEnabled(true);
+                Toast.makeText(MainActivity.this, "Error!", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

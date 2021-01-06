@@ -4,23 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
-    tools:context=".MainActivity">
+    tools:context=".Menu">
 
-
-    <EditText
-        android:id="@+id/editTextTextPersonName"
+    <ListView
+        android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:hint="Name" />
-
+        android:layout_above="@+id/button"
+        android:layout_alignParentTop="true"
+        android:layout_height="match_parent"/>
     <Button
         android:id="@+id/button"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:text="LOG IN" />
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:text="Create Room"
+        tools:ignore="ObsoleteLayoutParam" />
 </RelativeLayout>
