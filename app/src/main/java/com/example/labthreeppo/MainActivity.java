@@ -10,6 +10,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Random;
 
@@ -52,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view){
                 rolledP1 = r.nextInt(6) + 1;
                 setDiceImage(rolledP1, iv_dice_p1);
+                iv_dice_p1.startAnimation(animation);
 
                 if(rolledP2 != 0) {
                     tv_player1.setText("PLAYER 1 ROLL");
@@ -60,17 +62,24 @@ public class MainActivity extends AppCompatActivity {
                     if(rolledP1 > rolledP2) {
                         livesP2--;
                         setDiceImage(livesP2, iv_lives_p2);
+
+                        Toast.makeText(MainActivity.this, "Player 1 WIN", Toast.LENGTH_SHORT).show();
                     }
                     if(rolledP2 > rolledP1){
                         livesP1--;
                         setDiceImage(livesP1, iv_lives_p1);
+                        Toast.makeText(MainActivity.this, "Player 2 WIN", Toast.LENGTH_SHORT).show();
                     }
-                    checkEndGame();
+                    if(rolledP1 == rolledP2) {
+                        Toast.makeText(MainActivity.this, "Draw ", Toast.LENGTH_SHORT).show();
+                    }
+
                     rolledP2 = 0;
                     rolledP1 = 0;
 
                     iv_dice_p1.setEnabled(true);
                     iv_dice_p2.setEnabled(true);
+                    checkEndGame();
 
                 } else {
                     tv_player1.setText("PLAYER 1 ROLLED!");
@@ -84,23 +93,31 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view){
                 rolledP2 = r.nextInt(6) + 1;
                 setDiceImage(rolledP2, iv_dice_p2);
+                iv_dice_p2.startAnimation(animation);
                 if(rolledP1 != 0) {
                     tv_player1.setText("PLAYER 1 ROLL");
                     tv_player1.setText("PLAYER 2 ROLL");
                     if(rolledP1 > rolledP2) {
                         livesP2--;
                         setDiceImage(livesP2, iv_lives_p2);
+                        Toast.makeText(MainActivity.this, "Player 1 WIN", Toast.LENGTH_SHORT).show();
                     }
                     if(rolledP2 > rolledP1){
                         livesP1--;
                         setDiceImage(livesP1, iv_lives_p1);
+                        Toast.makeText(MainActivity.this, "Player 2 WIN", Toast.LENGTH_SHORT).show();
                     }
-                    checkEndGame();
+
+                    if(rolledP1 == rolledP2) {
+                        Toast.makeText(MainActivity.this, "Draw ", Toast.LENGTH_SHORT).show();
+                    }
+
                     rolledP1 = 0;
                     rolledP2 = 0;
 
                     iv_dice_p1.setEnabled(true);
                     iv_dice_p2.setEnabled(true);
+                    checkEndGame();
 
                 } else {
                     tv_player2.setText("PLAYER 2 ROLLED!");
@@ -114,36 +131,38 @@ public class MainActivity extends AppCompatActivity {
         switch (dice) {
             case 1:
                 image.setImageResource(R.drawable.dice1);
-                image.startAnimation(animation);
+
                 break;
             case 2:
                 image.setImageResource(R.drawable.dice2);
-                image.startAnimation(animation);
+
                 break;
             case 3:
                 image.setImageResource(R.drawable.dice3);
-                image.startAnimation(animation);
+
                 break;
             case 4:
                 image.setImageResource(R.drawable.dice4);
-                image.startAnimation(animation);
+
                 break;
             case 5:
                 image.setImageResource(R.drawable.dice5);
-                image.startAnimation(animation);
+
                 break;
             case 6:
                 image.setImageResource(R.drawable.dice6);
-                image.startAnimation(animation);
+
                 break;
             default:
                 image.setImageResource(R.drawable.krest);
-                image.startAnimation(animation);
 
         }
     }
     private void  checkEndGame() {
         if (livesP1 == 0 || livesP2 == 0) {
+            iv_dice_p1.setEnabled(false);
+            iv_dice_p2.setEnabled(false);
+
             String text = "";
             if(livesP1 != 0) {
                 text = "Winner Player 1!";
