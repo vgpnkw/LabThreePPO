@@ -1,9 +1,11 @@
 package com.example.labthreeppo;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
@@ -11,6 +13,12 @@ import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Random;
 
@@ -20,12 +28,41 @@ public class GameActivity extends AppCompatActivity {
     Random r;
     int livesP1, livesP2;
     int rolledP1, rolledP2;
+
+    String playerName = "";
+    String roomName = "";
+    String role = "";
+    String message = "";
+    FirebaseDatabase database;
+    DatabaseReference messageRef;
+
+
+
     Animation animation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
+        database = FirebaseDatabase.getInstance();
+
+        SharedPreferences preferences = getSharedPreferences("PREFS",0);
+        playerName = preferences.getString("playerName", "");
+
+        Bundle extras = getIntent().getExtras();
+        if(extras != null) {
+            roomName = extras.getString("roomName");
+            if(roomName.equals(playerName)) {
+                role = "host";
+            } else {
+                role = "guest";
+            }
+
+        }
+
 
         r = new Random();
         animation = AnimationUtils.loadAnimation(this, R.anim.rotate);
@@ -39,8 +76,8 @@ public class GameActivity extends AppCompatActivity {
         tv_player1 = findViewById(R.id.tv_player1);
         tv_player2 = findViewById(R.id.tv_player2);
 
-        tv_player1.setText("PLAYER 1 ROLL");
-        tv_player2.setText("PLAYER 2 ROLL");
+        tv_player1.setText(String.format("%s ROLL", playerName));
+        tv_player2.setText(String.format("%s ROLL", playerName));
 
         livesP1 = 6;
         livesP2 = 6;
@@ -51,13 +88,15 @@ public class GameActivity extends AppCompatActivity {
         iv_dice_p1.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
+
                 rolledP1 = r.nextInt(6) + 1;
                 setDiceImage(rolledP1, iv_dice_p1);
                 iv_dice_p1.startAnimation(animation);
 
+
                 if(rolledP2 != 0) {
-                    tv_player1.setText("PLAYER 1 ROLL");
-                    tv_player2.setText("PLAYER 2 ROLL");
+                    tv_player1.setText(String.format("%s ROLL", playerName));
+                    tv_player2.setText(String.format("%s ROLL", playerName));
 
                     if(rolledP1 > rolledP2) {
                         livesP2--;
@@ -82,8 +121,10 @@ public class GameActivity extends AppCompatActivity {
                     checkEndGame();
 
                 } else {
-                    tv_player1.setText("PLAYER 1 ROLLED!");
+                    tv_player1.setText(String.format("%s ROLLED!", playerName));
                     iv_dice_p1.setEnabled(false);
+                    message = role + ": ROLLED!";
+                    messageRef.setValue(message);
                 }
             }
         });
@@ -95,8 +136,8 @@ public class GameActivity extends AppCompatActivity {
                 setDiceImage(rolledP2, iv_dice_p2);
                 iv_dice_p2.startAnimation(animation);
                 if(rolledP1 != 0) {
-                    tv_player1.setText("PLAYER 1 ROLL");
-                    tv_player1.setText("PLAYER 2 ROLL");
+                    tv_player1.setText(String.format("%s ROLL", playerName));
+                    tv_player1.setText(String.format("%s ROLL", playerName));
                     if(rolledP1 > rolledP2) {
                         livesP2--;
                         setDiceImage(livesP2, iv_lives_p2);
@@ -120,11 +161,18 @@ public class GameActivity extends AppCompatActivity {
                     checkEndGame();
 
                 } else {
-                    tv_player2.setText("PLAYER 2 ROLLED!");
+                    tv_player2.setText(String.format("%s ROLLED!", playerName));
                     iv_dice_p2.setEnabled(false);
+                    message = role + ": ROLLED!";
+                    messageRef.setValue(message);
                 }
             }
         });
+        //listen for incomming message
+        messageRef = database.getReference("rooms/" + roomName + "/message");
+        message = role + "ROLLED!";
+        messageRef.setValue(message);
+        addRoomEventListener();
 
     }
     private  void setDiceImage(int dice, ImageView image) {
@@ -165,10 +213,10 @@ public class GameActivity extends AppCompatActivity {
 
             String text = "";
             if(livesP1 != 0) {
-                text = "Winner Player 1!";
+                text = String.format("Winner %s!", playerName);
             }
             if(livesP2 != 0) {
-                text = "Winner Player 2!";
+                text = String.format("Winner %s!", playerName);
             }
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
             alertDialogBuilder.setCancelable(false);
@@ -182,5 +230,29 @@ public class GameActivity extends AppCompatActivity {
             AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
         }
+
+    }
+    private void addRoomEventListener() {
+        messageRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if(role.equals("host")) {
+                    if(snapshot.getValue(String.class).contains("quest:")) {
+                        iv_dice_p1.setEnabled(true);
+                        Toast.makeText(GameActivity.this, "" + snapshot.getValue(String.class).replace("guest:", ""), Toast.LENGTH_SHORT).show();
+                    } else {
+                        iv_dice_p1.setEnabled(true);
+                        Toast.makeText(GameActivity.this, "" + snapshot.getValue(String.class).replace("host:", ""), Toast.LENGTH_SHORT).show();
+
+                    }
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                messageRef.setValue(message);
+            }
+        });
     }
 }
