@@ -23,8 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Menu extends AppCompatActivity {
+
     ListView listView;
-    Button button;
+    Button button, profile;
     List<String> roomsList;
     String playerName = "";
     String roomName = "";
@@ -45,6 +46,7 @@ public class Menu extends AppCompatActivity {
 
         listView = findViewById(R.id.listView);
         button = findViewById(R.id.button);
+        profile = findViewById(R.id.profile);
 
         roomsList = new ArrayList<>();
         button.setOnClickListener(new View.OnClickListener() {
@@ -56,6 +58,13 @@ public class Menu extends AppCompatActivity {
                 roomRef = database.getReference("rooms/" + roomName + "/player1");
                 addRoomEventListener();
                 roomRef.setValue(playerName);
+            }
+        });
+        profile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), UserProfileFragment.class);
+                startActivity(intent);
             }
         });
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
